@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { NodeSSH } from "node-ssh";
 
 import { createConfigurationSchema } from "./validator.js";
 import { env } from "../../../env.js";
 
-import { writeFileSync, unlinkSync } from "fs";
+import { writeFileSync, unlinkSync, mkdirSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import yaml from "js-yaml";
 
 export const configuration = new Hono();
 
@@ -53,7 +53,7 @@ configuration.post(
     try {
       const localPath = path.resolve(
         `${dirname}/${serverName}`,
-        `${serviceName}.json`
+        `${serviceName}.yaml`
       );
 
       console.log({ localPath });
@@ -92,10 +92,11 @@ configuration.post(
         },
       };
 
-      writeFileSync(localPath, JSON.stringify(traefikSchema, null, 2));
+      const yamlData = yaml.dump(traefikSchema);
 
-      // Upload the file
-      // await ssh.putFile(localPath, remotePath);
+      mkdirSync(path.dirname(localPath), { recursive: true });
+
+      writeFileSync(localPath, yamlData, "utf8");
 
       // Cleanup the temp file
       // unlinkSync(localPath);
@@ -103,6 +104,6 @@ configuration.post(
       console.log({ error });
     }
 
-    return c.text(`Create configuration ${env.HOSTNAME}`);
+    return c.text(`Create configuration`);
   }
 );

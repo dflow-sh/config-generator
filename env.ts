@@ -7,9 +7,7 @@ config();
 export const env = createEnv({
   server: {
     WILD_CARD_DOMAIN: z.string(),
-    BEARER_TOKEN: z.string().min(1),
-    HOSTNAME: z.string().min(1),
-    USERNAME: z.string().min(1),
+    PROXY_SECRET: z.string().min(1),
   },
   /**
    * What object holds the environment variables at runtime. This is usually
