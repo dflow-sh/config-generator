@@ -46,50 +46,47 @@ configuration.post(
   "/create",
   zValidator("json", createConfigurationSchema),
   async (c) => {
-    // const ssh = new NodeSSH();
-    const { serverName, serviceName, enableLetsencrypt, targetIP } =
-      c.req.valid("json");
+    const { serverName, serviceName, tls, targetIP } = c.req.valid("json");
 
-    console.log({ serverName, serviceName, enableLetsencrypt, targetIP });
+    console.log({ serverName, serviceName, targetIP });
 
     try {
-      // await ssh.connect({
-      //   host: env.HOSTNAME,
-      //   username: env.USERNAME,
-      // });
-
       const localPath = path.resolve(
-        dirname,
-        `temp.${new Date().getTime()}.json`
+        `${dirname}/${serverName}`,
+        `${serviceName}.json`
       );
-      const remotePath = `/remote/${serverName}/${serviceName}.json`;
 
       console.log({ localPath });
 
       const traefikSchema = {
         http: {
           routers: {
-            [`{${serviceName}}-{${serverName}}-router`]: {
+            [`${serviceName}-${serverName}-router`]: {
               rule:
                 "Host(`" +
-                `{${serviceName}}.{${serverName}}.${env.WILD_CARD_DOMAIN}` +
+                `${serviceName}.${serverName}.${env.WILD_CARD_DOMAIN}` +
                 "`)",
               entryPoints: ["websecure"],
-              tls: {
-                certResolver: "letsencrypt",
-              },
-              service: `{${serviceName}}-{${serverName}}-service`,
+              tls: tls
+                ? tls
+                : {
+                    certResolver: "letsencrypt",
+                  },
+              service: `${serviceName}-${serverName}-service`,
             },
           },
           services: {
-            [`{${serviceName}}-{${serverName}}-service`]: {
+            [`${serviceName}-${serverName}-service`]: {
               loadBalancer: {
                 servers: [
                   {
-                    url: `http://${targetIP}`,
+                    url: tls
+                      ? `https://${targetIP}:80`
+                      : `http://${targetIP}:80`,
                   },
                 ],
               },
+              passHostHeader: true,
             },
           },
         },
