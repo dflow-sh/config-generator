@@ -1,0 +1,23 @@
+{
+  "name": "traefik-reverse-proxy",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.4",
+    "@hono/zod-validator": "^0.7.0",
+    "@t3-oss/env-core": "^0.13.8",
+    "hono": "^4.8.3",
+    "node-ssh": "^13.2.1",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "dotenv": "^17.0.1",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}
