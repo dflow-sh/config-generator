@@ -89,7 +89,6 @@ configuration.post(
                   },
                 ],
               },
-              passHostHeader: true,
             },
           },
         },
