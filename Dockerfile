@@ -24,10 +24,10 @@ COPY . .
 
 # Optional: Pass build-time environment variables
 ARG WILD_CARD_DOMAIN
-ARG PROXY_SECRET
+ARG JWT_TOKEN
 
 ENV WILD_CARD_DOMAIN=$WILD_CARD_DOMAIN
-ENV PROXY_SECRET=$PROXY_SECRET
+ENV JWT_TOKEN=$JWT_TOKEN
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \

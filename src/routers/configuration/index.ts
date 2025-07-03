@@ -46,13 +46,16 @@ configuration.post(
   "/create",
   zValidator("json", createConfigurationSchema),
   async (c) => {
-    const { serverName, serviceName, tls, targetIP } = c.req.valid("json");
+    const { serverName, serviceName, tls, targetIP, username } =
+      c.req.valid("json");
 
     console.log({ serverName, serviceName, targetIP });
 
     try {
       const localPath = path.resolve(
-        `${dirname}/${serverName}`,
+        `${
+          process.env?.NODE_ENV === "production" ? "/app/output" : dirname
+        }/${username}/${serverName}`,
         `${serviceName}.yaml`
       );
 
