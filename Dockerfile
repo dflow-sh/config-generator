@@ -25,9 +25,11 @@ COPY . .
 # Optional: Pass build-time environment variables
 ARG WILD_CARD_DOMAIN
 ARG JWT_TOKEN
+ARG PORT
 
 ENV WILD_CARD_DOMAIN=$WILD_CARD_DOMAIN
 ENV JWT_TOKEN=$JWT_TOKEN
+ENV PORT=$PORT
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
