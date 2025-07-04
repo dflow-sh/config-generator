@@ -21,12 +21,11 @@ const dirname = path.dirname(filename);
 configuration.post(zValidator("json", createConfigurationSchema), async (c) => {
   const { serverName, serviceName, tls, targetIP, username } =
     c.req.valid("json");
+  const dir = process.env?.NODE_ENV === "production" ? "/app/output" : dirname;
 
   try {
     const localPath = path.resolve(
-      `${
-        process.env?.NODE_ENV === "production" ? "/app/output" : dirname
-      }/${username}/${serverName}`,
+      `${dir}/${username}/${serverName}`,
       `${serviceName}.yaml`
     );
 
@@ -68,6 +67,15 @@ configuration.post(zValidator("json", createConfigurationSchema), async (c) => {
     mkdirSync(path.dirname(localPath), { recursive: true });
 
     writeFileSync(localPath, yamlData, "utf8");
+
+    // This reloads the traefik configuration
+    writeFileSync(
+      `${dir}/.logs`,
+      `\n# ${new Date().toISOString()} Created ${username}/${serverName}/${serviceName}.yaml`,
+      {
+        flag: "a",
+      }
+    );
 
     return c.json(
       {
