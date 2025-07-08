@@ -1,49 +1,58 @@
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
+import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
 
+import { env } from '../../../env.js'
 import {
   createConfigurationSchema,
   deleteConfigurationSchema,
-} from "./validator.js";
-import { env } from "../../../env.js";
+} from './validator.js'
 
-import { writeFileSync, mkdirSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import yaml from "js-yaml";
-import { unlinkSync } from "fs";
+import { mkdirSync, unlinkSync, writeFileSync } from 'fs'
+import yaml from 'js-yaml'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-export const configuration = new Hono();
+export const configuration = new Hono()
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
 
-configuration.post(zValidator("json", createConfigurationSchema), async (c) => {
-  const { serverName, serviceName, tls, targetIP, username } =
-    c.req.valid("json");
-  const dir = process.env?.NODE_ENV === "production" ? "/app/output" : dirname;
+configuration.post(zValidator('json', createConfigurationSchema), async c => {
+  const { serverName, serviceName, tls, targetIP, username, domains } =
+    c.req.valid('json')
+  const dir =
+    process.env?.NODE_ENV === 'production'
+      ? '/app/output'
+      : path.resolve(dirname, '../../../output')
 
   try {
+    // Generate a unique filename using timestamp
+    const timestamp = Date.now()
     const localPath = path.resolve(
       `${dir}/${username}/${serverName}`,
-      `${serviceName}.yaml`
-    );
+      `${serviceName}-${timestamp}.yaml`,
+    )
 
-    console.log({ serverName, serviceName, targetIP, localPath });
+    console.log({ serverName, serviceName, targetIP, localPath })
+
+    // Build the rule string
+    const defaultHost = `${serviceName}.${serverName}.${env.WILD_CARD_DOMAIN}`
+    let ruleParts = [`Host(\`${defaultHost}\`)`]
+    if (domains && Array.isArray(domains) && domains.length > 0) {
+      ruleParts = ruleParts.concat(domains.map(domain => `Host(\`${domain}\`)`))
+    }
+    const rule = ruleParts.join(' || ')
 
     const traefikSchema = {
       http: {
         routers: {
           [`${serviceName}-${serverName}-router`]: {
-            rule:
-              "Host(`" +
-              `${serviceName}.${serverName}.${env.WILD_CARD_DOMAIN}` +
-              "`)",
-            entryPoints: ["websecure"],
+            rule,
+            entryPoints: ['websecure'],
             tls: tls
               ? tls
               : {
-                  certResolver: "letsencrypt",
+                  certResolver: 'letsencrypt',
                 },
             service: `${serviceName}-${serverName}-service`,
           },
@@ -60,31 +69,31 @@ configuration.post(zValidator("json", createConfigurationSchema), async (c) => {
           },
         },
       },
-    };
+    }
 
-    const yamlData = yaml.dump(traefikSchema);
+    const yamlData = yaml.dump(traefikSchema)
 
-    mkdirSync(path.dirname(localPath), { recursive: true });
+    mkdirSync(path.dirname(localPath), { recursive: true })
 
-    writeFileSync(localPath, yamlData, "utf8");
+    writeFileSync(localPath, yamlData, 'utf8')
 
     // This reloads the traefik configuration
     writeFileSync(
       `${dir}/.logs`,
-      `\n# ${new Date().toISOString()} Created ${username}/${serverName}/${serviceName}.yaml`,
+      `\n# ${new Date().toISOString()} Created ${username}/${serverName}/${serviceName}-${timestamp}.yaml`,
       {
-        flag: "a",
-      }
-    );
+        flag: 'a',
+      },
+    )
 
     return c.json(
       {
-        message: `Successfully created configuration file ${username}/${serverName}/${serviceName}.yaml`,
+        message: `Successfully created configuration file ${username}/${serverName}/${serviceName}-${timestamp}.yaml`,
       },
       {
         status: 201,
-      }
-    );
+      },
+    )
   } catch (error) {
     return c.json(
       {
@@ -93,88 +102,89 @@ configuration.post(zValidator("json", createConfigurationSchema), async (c) => {
       },
       {
         status: 500,
-      }
-    );
+      },
+    )
   }
-});
+})
 
-configuration.delete(
-  zValidator("json", deleteConfigurationSchema),
-  async (c) => {
-    const { serverName, serviceName, username } = c.req.valid("json");
+configuration.delete(zValidator('json', deleteConfigurationSchema), async c => {
+  const { serverName, serviceName, username } = c.req.valid('json')
 
-    try {
-      const localPath = path.resolve(
-        `${
-          process.env?.NODE_ENV === "production" ? "/app/output" : dirname
-        }/${username}/${serverName}`,
-        `${serviceName}.yaml`
-      );
+  try {
+    const localPath = path.resolve(
+      `${
+        process.env?.NODE_ENV === 'production'
+          ? '/app/output'
+          : path.resolve(dirname, '../../../output')
+      }/${username}/${serverName}`,
+      `${serviceName}.yaml`,
+    )
 
-      // Delete the file at localPath
-      unlinkSync(localPath);
+    // Delete the file at localPath
+    unlinkSync(localPath)
 
-      return c.json(
-        {
-          message: `Successfully deleted configuration file ${username}/${serverName}/${serviceName}.yaml`,
-        },
-        {
-          status: 200,
-        }
-      );
-    } catch (error) {
-      return c.json(
-        {
-          message: `Failed to delete configuration file ${username}/${serverName}/${serviceName}.yaml`,
-          error,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
+    return c.json(
+      {
+        message: `Successfully deleted configuration file ${username}/${serverName}/${serviceName}.yaml`,
+      },
+      {
+        status: 200,
+      },
+    )
+  } catch (error) {
+    return c.json(
+      {
+        message: `Failed to delete configuration file ${username}/${serverName}/${serviceName}.yaml`,
+        error,
+      },
+      {
+        status: 500,
+      },
+    )
   }
-);
+})
 
-configuration.post("/default", async (c) => {
+configuration.post('/default', async c => {
   const defaultJSON = {
     http: {
       routers: {
-        "dflow-traefik-router": {
-          rule: "Host(`" + `dflow-traefik.${env.WILD_CARD_DOMAIN}` + ")",
-          entryPoints: ["websecure"],
+        'dflow-traefik-router': {
+          rule: 'Host(`' + `dflow-traefik.${env.WILD_CARD_DOMAIN}` + ')',
+          entryPoints: ['websecure'],
           tls: {
-            certResolver: "letsencrypt",
+            certResolver: 'letsencrypt',
           },
-          service: "dflow-traefik-service",
+          service: 'dflow-traefik-service',
         },
       },
       services: {
-        "dflow-traefik-service": {
+        'dflow-traefik-service': {
           loadBalancer: {
             servers: [
               {
-                url: "http://127.0.0.1:3000",
+                url: 'http://127.0.0.1:3000',
               },
             ],
           },
         },
       },
     },
-  };
+  }
 
   try {
     const localPath = path.resolve(
       `${
-        process.env?.NODE_ENV === "production" ? "/app/output" : dirname
-      }/dflow-traefik.yaml`
-    );
+        process.env?.NODE_ENV === 'production'
+          ? '/app/output'
+          : path.resolve(dirname, '../../../output')
+      }/dflow-traefik.yaml`,
+    )
 
-    const yamlData = yaml.dump(defaultJSON);
+    const yamlData = yaml.dump(defaultJSON)
 
-    mkdirSync(path.dirname(localPath), { recursive: true });
+    mkdirSync(path.dirname(localPath), { recursive: true })
 
-    writeFileSync(localPath, yamlData, "utf8");
+    writeFileSync(localPath, yamlData, 'utf8')
 
     return c.json(
       {
@@ -182,8 +192,8 @@ configuration.post("/default", async (c) => {
       },
       {
         status: 201,
-      }
-    );
+      },
+    )
   } catch (error) {
     return c.json(
       {
@@ -192,7 +202,7 @@ configuration.post("/default", async (c) => {
       },
       {
         status: 500,
-      }
-    );
+      },
+    )
   }
-});
+})
