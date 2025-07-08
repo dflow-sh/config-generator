@@ -1,14 +1,14 @@
-import { createEnv } from "@t3-oss/env-core";
-import { z } from "zod";
-import { config } from "dotenv";
+import { createEnv } from '@t3-oss/env-core'
+import { config } from 'dotenv'
+import { z } from 'zod'
 
-config();
+config()
 
 export const env = createEnv({
   server: {
     WILD_CARD_DOMAIN: z.string(),
     JWT_TOKEN: z.string().min(1),
-    PORT: z.string().optional().default("3000"),
+    PORT: z.string().optional().default('3000'),
   },
   /**
    * What object holds the environment variables at runtime. This is usually
@@ -30,4 +30,4 @@ export const env = createEnv({
    * explicitly specify this option as true.
    */
   emptyStringAsUndefined: true,
-});
+})

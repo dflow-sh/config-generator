@@ -1,44 +1,45 @@
-import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import { configuration } from "./routers/configuration/index.js";
-import { cors } from "hono/cors";
-import { logger } from "hono/logger";
-import { env } from "../env.js";
+import { env } from '../env.js'
+import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
 
-const app = new Hono();
+import { configuration } from './routers/configuration/index.js'
 
-app.use(logger());
+const app = new Hono()
+
+app.use(logger())
 app.use(
-  "*",
+  '*',
   cors({
-    origin: "*", // using wildcard in cors
-    allowHeaders: ["Content-Type", "Authorization", "Cookie"],
-    allowMethods: ["POST", "DELETE", "GET"],
-    exposeHeaders: ["Content-Length", "Set-Cookie"],
+    origin: '*', // using wildcard in cors
+    allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowMethods: ['POST', 'DELETE', 'GET'],
+    exposeHeaders: ['Content-Length', 'Set-Cookie'],
     maxAge: 600,
     credentials: true,
-  })
-);
+  }),
+)
 
-app.get("/", (c) => {
+app.get('/', c => {
   return c.json(
     {
-      message: "Hello from proxy-configurator!",
+      message: 'Hello from proxy-configurator!',
     },
     {
       status: 200,
-    }
-  );
-});
+    },
+  )
+})
 
-app.route("/configuration", configuration);
+app.route('/configuration', configuration)
 
 serve(
   {
     fetch: app.fetch,
     port: +env.PORT,
   },
-  (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
-  }
-);
+  info => {
+    console.log(`Server is running on http://localhost:${info.port}`)
+  },
+)

@@ -1,16 +1,15 @@
-import { zValidator } from '@hono/zod-validator'
-import { Hono } from 'hono'
-
 import { env } from '../../../env.js'
+import { zValidator } from '@hono/zod-validator'
+import { mkdirSync, unlinkSync, writeFileSync } from 'fs'
+import { Hono } from 'hono'
+import yaml from 'js-yaml'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
 import {
   createConfigurationSchema,
   deleteConfigurationSchema,
 } from './validator.js'
-
-import { mkdirSync, unlinkSync, writeFileSync } from 'fs'
-import yaml from 'js-yaml'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
 export const configuration = new Hono()
 
