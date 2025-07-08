@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
@@ -15,9 +17,12 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.17",
     "dotenv": "^17.0.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.13",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3"
   }
