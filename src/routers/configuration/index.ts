@@ -1,10 +1,10 @@
-import { env } from '../../../env.js'
 import { zValidator } from '@hono/zod-validator'
 import { mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { Hono } from 'hono'
 import yaml from 'js-yaml'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { env } from '../../../env.js'
 
 import {
   createConfigurationSchema,
@@ -29,7 +29,7 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
     const timestamp = Date.now()
     const localPath = path.resolve(
       `${dir}/${username}/${serverName}`,
-      `${serviceName}-${timestamp}.yaml`,
+      `${serviceName}.yaml`,
     )
 
     console.log({ serverName, serviceName, targetIP, localPath })
