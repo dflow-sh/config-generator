@@ -1,10 +1,10 @@
+import { env } from '../../../env.js'
 import { zValidator } from '@hono/zod-validator'
 import { mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { Hono } from 'hono'
 import yaml from 'js-yaml'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { env } from '../../../env.js'
 
 import {
   createConfigurationSchema,
@@ -17,8 +17,14 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 configuration.post(zValidator('json', createConfigurationSchema), async c => {
-  const { serverName, serviceName, tls, targetIP, username, domains } =
-    c.req.valid('json')
+  const {
+    serverName,
+    serviceName,
+    tls,
+    targetIP,
+    username,
+    domains = [],
+  } = c.req.valid('json')
   const dir =
     process.env?.NODE_ENV === 'production'
       ? '/app/output'
@@ -26,7 +32,6 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
 
   try {
     // Generate a unique filename using timestamp
-    const timestamp = Date.now()
     const localPath = path.resolve(
       `${dir}/${username}/${serverName}`,
       `${serviceName}.yaml`,
@@ -37,9 +42,15 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
     // Build the rule string
     const defaultHost = `${serviceName}.${serverName}.${env.WILD_CARD_DOMAIN}`
     let ruleParts = [`Host(\`${defaultHost}\`)`]
-    if (domains && Array.isArray(domains) && domains.length > 0) {
-      ruleParts = ruleParts.concat(domains.map(domain => `Host(\`${domain}\`)`))
+
+    if (domains?.length > 0) {
+      ruleParts = ruleParts.concat(
+        domains
+          .filter(domain => !domain.endsWith(env.WILD_CARD_DOMAIN))
+          .map(domain => `Host(\`${domain}\`)`),
+      )
     }
+
     const rule = ruleParts.join(' || ')
 
     const traefikSchema = {
@@ -79,7 +90,7 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
     // This reloads the traefik configuration
     writeFileSync(
       `${dir}/.logs`,
-      `\n# ${new Date().toISOString()} Created ${username}/${serverName}/${serviceName}-${timestamp}.yaml`,
+      `\n# ${new Date().toISOString()} Created ${username}/${serverName}/${serviceName}.yaml`,
       {
         flag: 'a',
       },
@@ -87,7 +98,7 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
 
     return c.json(
       {
-        message: `Successfully created configuration file ${username}/${serverName}/${serviceName}-${timestamp}.yaml`,
+        message: `Successfully created configuration file ${username}/${serverName}/${serviceName}.yaml`,
       },
       {
         status: 201,

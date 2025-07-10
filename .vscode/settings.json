@@ -1,5 +1,5 @@
 {
-  "cSpell.words": [],
+  "cSpell.words": ["letsencrypt", "traefik", "websecure"],
   "npm.packageManager": "pnpm",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": true,
