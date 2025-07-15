@@ -37,7 +37,7 @@ app.route('/configuration', configuration)
 serve(
   {
     fetch: app.fetch,
-    port: +env.PORT,
+    port: +env.PROXY_PORT,
   },
   info => {
     console.log(`Server is running on http://localhost:${info.port}`)
