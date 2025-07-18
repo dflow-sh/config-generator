@@ -25,11 +25,11 @@ COPY . .
 # Optional: Pass build-time environment variables
 ARG WILD_CARD_DOMAIN
 ARG JWT_TOKEN
-ARG PORT
+ARG PROXY_PORT
 
 ENV WILD_CARD_DOMAIN=$WILD_CARD_DOMAIN
 ENV JWT_TOKEN=$JWT_TOKEN
-ENV PORT=$PORT
+ENV PROXY_PORT=$PROXY_PORT
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
@@ -48,7 +48,7 @@ COPY --from=builder /app/dist ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-EXPOSE 3000
+EXPOSE 9999
 
 CMD ["node", "./src/index.js"]
 
