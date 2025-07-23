@@ -159,7 +159,7 @@ configuration.post('/default', async c => {
     http: {
       routers: {
         'dflow-traefik-router': {
-          rule: 'Host(`' + `dflow-traefik.${env.WILD_CARD_DOMAIN}` + ')',
+          rule: 'Host(`' + `dflow-traefik.${env.WILD_CARD_DOMAIN}` + '`)',
           entryPoints: ['websecure'],
           tls: {
             certResolver: 'letsencrypt',
