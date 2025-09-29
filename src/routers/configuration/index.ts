@@ -47,7 +47,14 @@ configuration.post(zValidator('json', createConfigurationSchema), async c => {
       ruleParts = ruleParts.concat(
         domains
           .filter(domain => !domain.endsWith(env.WILD_CARD_DOMAIN))
-          .map(domain => `Host(\`${domain}\`)`),
+          .map(domain => {
+            // handling wildcard domains
+            if (domain.startsWith('*')) {
+              return `HostRegexp(\`${domain.replace('*', '{subdomain:[a-z0-9-]+}')}\`)`
+            }
+
+            return `Host(\`${domain}\`)`
+          }),
       )
     }
 
